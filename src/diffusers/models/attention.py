@@ -18,13 +18,6 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-try:
-    import xformers.ops
-    xformers._is_functorch_available = True
-    MEM_EFFICIENT_ATTN = True
-except ImportError:
-    print("[!] Not using xformers memory efficient attention.")
-    MEM_EFFICIENT_ATTN = False
 
 class AttentionBlock(nn.Module):
     """
@@ -243,7 +236,6 @@ class CrossAttention(nn.Module):
 
         self.scale = dim_head**-0.5
         self.heads = heads
-        self.dim_head = dim_head
         # for slice_size > 0 the attention score computation
         # is split across the batch axis to save memory
         # You can set slice_size with `set_attention_slice`
@@ -271,6 +263,7 @@ class CrossAttention(nn.Module):
 
     def forward(self, hidden_states, context=None, mask=None):
         batch_size, sequence_length, _ = hidden_states.shape
+
         query = self.to_q(hidden_states)
         context = context if context is not None else hidden_states
         key = self.to_k(context)
@@ -283,17 +276,14 @@ class CrossAttention(nn.Module):
         value = self.reshape_heads_to_batch_dim(value)
 
         # TODO(PVP) - mask is currently never used. Remember to re-implement when used
+
         # attention, what we cannot get enough of
-        if MEM_EFFICIENT_ATTN:
-            query = query.contiguous()
-            key = key.contiguous()
-            value = value.contiguous()
-            hidden_states = xformers.ops.memory_efficient_attention(query, key, value)
-        elif self._slice_size is None or query.shape[0] // self._slice_size == 1:
+
+        if self._slice_size is None or query.shape[0] // self._slice_size == 1:
             hidden_states = self._attention(query, key, value)
         else:
             hidden_states = self._sliced_attention(query, key, value, sequence_length, dim)
-        hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
+
         return self.to_out(hidden_states)
 
     def _attention(self, query, key, value):
@@ -302,6 +292,8 @@ class CrossAttention(nn.Module):
         attention_probs = attention_scores.softmax(dim=-1)
         # compute attention output
         hidden_states = torch.matmul(attention_probs, value)
+        # reshape hidden_states
+        hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
         return hidden_states
 
     def _sliced_attention(self, query, key, value, sequence_length, dim):
@@ -321,6 +313,8 @@ class CrossAttention(nn.Module):
 
             hidden_states[start_idx:end_idx] = attn_slice
 
+        # reshape hidden_states
+        hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
         return hidden_states
 
 

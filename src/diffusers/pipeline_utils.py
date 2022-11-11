@@ -122,7 +122,7 @@ class DiffusionPipeline(ConfigMixin):
                 library = module.__module__.split(".")[0]
 
                 # check if the module is a pipeline module
-                pipeline_dir = module.__module__.split(".")[-2] if len(module.__module__.split(".")) > 2 else None
+                pipeline_dir = module.__module__.split(".")[-2]
                 path = module.__module__.split(".")
                 is_pipeline_module = pipeline_dir in path and hasattr(pipelines, pipeline_dir)
 
@@ -137,8 +137,8 @@ class DiffusionPipeline(ConfigMixin):
 
                 register_dict = {name: (library, class_name)}
 
-                # save model index config
-                self.register_to_config(**register_dict)
+            # save model index config
+            self.register_to_config(**register_dict)
 
             # set models
             setattr(self, name, module)

@@ -29,9 +29,7 @@ if is_torch_available():
     )
 
     if is_torch_higher_equal_than_1_12:
-        # Some builds of torch 1.12 don't have the mps backend registered. See #892 for more details
-        mps_backend_registered = hasattr(torch.backends, "mps")
-        torch_device = "mps" if (mps_backend_registered and torch.backends.mps.is_available()) else torch_device
+        torch_device = "mps" if torch.backends.mps.is_available() else torch_device
 
 
 def get_tests_dir(append_path=None):
