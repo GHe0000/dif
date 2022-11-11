@@ -101,28 +101,17 @@ class Timesteps(nn.Module):
 class GaussianFourierProjection(nn.Module):
     """Gaussian Fourier embeddings for noise levels."""
 
-    def __init__(
-        self, embedding_size: int = 256, scale: float = 1.0, set_W_to_weight=True, log=True, flip_sin_to_cos=False
-    ):
+    def __init__(self, embedding_size: int = 256, scale: float = 1.0):
         super().__init__()
         self.weight = nn.Parameter(torch.randn(embedding_size) * scale, requires_grad=False)
-        self.log = log
-        self.flip_sin_to_cos = flip_sin_to_cos
 
-        if set_W_to_weight:
-            # to delete later
-            self.W = nn.Parameter(torch.randn(embedding_size) * scale, requires_grad=False)
+        # to delete later
+        self.W = nn.Parameter(torch.randn(embedding_size) * scale, requires_grad=False)
 
-            self.weight = self.W
+        self.weight = self.W
 
     def forward(self, x):
-        if self.log:
-            x = torch.log(x)
-
+        x = torch.log(x)
         x_proj = x[:, None] * self.weight[None, :] * 2 * np.pi
-
-        if self.flip_sin_to_cos:
-            out = torch.cat([torch.cos(x_proj), torch.sin(x_proj)], dim=-1)
-        else:
-            out = torch.cat([torch.sin(x_proj), torch.cos(x_proj)], dim=-1)
+        out = torch.cat([torch.sin(x_proj), torch.cos(x_proj)], dim=-1)
         return out

@@ -22,7 +22,7 @@ import jax.numpy as jnp
 from jax import random
 
 from ..configuration_utils import ConfigMixin, register_to_config
-from .scheduling_utils_flax import FlaxSchedulerMixin, FlaxSchedulerOutput, broadcast_to_shape_from_left
+from .scheduling_utils_flax import FlaxSchedulerMixin, FlaxSchedulerOutput
 
 
 @flax.struct.dataclass
@@ -80,10 +80,6 @@ class FlaxScoreSdeVeScheduler(FlaxSchedulerMixin, ConfigMixin):
         correct_steps (`int`): number of correction steps performed on a produced sample.
     """
 
-    @property
-    def has_state(self):
-        return True
-
     @register_to_config
     def __init__(
         self,
@@ -94,20 +90,12 @@ class FlaxScoreSdeVeScheduler(FlaxSchedulerMixin, ConfigMixin):
         sampling_eps: float = 1e-5,
         correct_steps: int = 1,
     ):
-        pass
-
-    def create_state(self):
         state = ScoreSdeVeSchedulerState.create()
-        return self.set_sigmas(
-            state,
-            self.config.num_train_timesteps,
-            self.config.sigma_min,
-            self.config.sigma_max,
-            self.config.sampling_eps,
-        )
+
+        self.state = self.set_sigmas(state, num_train_timesteps, sigma_min, sigma_max, sampling_eps)
 
     def set_timesteps(
-        self, state: ScoreSdeVeSchedulerState, num_inference_steps: int, shape: Tuple = (), sampling_eps: float = None
+        self, state: ScoreSdeVeSchedulerState, num_inference_steps: int, shape: Tuple, sampling_eps: float = None
     ) -> ScoreSdeVeSchedulerState:
         """
         Sets the continuous timesteps used for the diffusion chain. Supporting function to be run before inference.
@@ -205,7 +193,8 @@ class FlaxScoreSdeVeScheduler(FlaxSchedulerMixin, ConfigMixin):
         # equation 6 in the paper: the model_output modeled by the network is grad_x log pt(x)
         # also equation 47 shows the analog from SDE models to ancestral sampling methods
         diffusion = diffusion.flatten()
-        diffusion = broadcast_to_shape_from_left(diffusion, sample.shape)
+        while len(diffusion.shape) < len(sample.shape):
+            diffusion = diffusion[:, None]
         drift = drift - diffusion**2 * model_output
 
         #  equation 6: sample noise for the diffusion term of
@@ -263,7 +252,8 @@ class FlaxScoreSdeVeScheduler(FlaxSchedulerMixin, ConfigMixin):
 
         # compute corrected sample: model_output term and noise term
         step_size = step_size.flatten()
-        step_size = broadcast_to_shape_from_left(step_size, sample.shape)
+        while len(step_size.shape) < len(sample.shape):
+            step_size = step_size[:, None]
         prev_sample_mean = sample + step_size * model_output
         prev_sample = prev_sample_mean + ((step_size * 2) ** 0.5) * noise
 

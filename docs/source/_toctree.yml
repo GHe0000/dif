@@ -12,9 +12,9 @@
       title: "Loading Pipelines, Models, and Schedulers"
     - local: using-diffusers/configuration
       title: "Configuring Pipelines, Models, and Schedulers"
-    - local: using-diffusers/custom_pipeline_overview
-      title: "Loading and Adding Custom Pipelines"
-    title: "Loading & Hub"
+    - local: using-diffusers/custom_pipelines
+      title: "Loading and Creating Custom Pipelines"
+    title: "Loading"
   - sections:
     - local: using-diffusers/unconditional_image_generation
       title: "Unconditional Image Generation"
@@ -24,10 +24,8 @@
       title: "Text-Guided Image-to-Image"
     - local: using-diffusers/inpaint
       title: "Text-Guided Image-Inpainting"
-    - local: using-diffusers/custom_pipeline_examples
-      title: "Community Pipelines"
-    - local: using-diffusers/contribute_pipeline
-      title: "How to contribute a Pipeline"
+    - local: using-diffusers/custom
+      title: "Create a custom pipeline"
     title: "Pipelines for Inference"
   title: "Using Diffusers"
 - sections:
@@ -36,7 +34,7 @@
   - local: optimization/onnx
     title: "ONNX"
   - local: optimization/open_vino
-    title: "OpenVINO"
+    title: "Open Vino"
   - local: optimization/mps
     title: "MPS"
   title: "Optimization/Special Hardware"
@@ -46,11 +44,9 @@
   - local: training/unconditional_training
     title: "Unconditional Image Generation"
   - local: training/text_inversion
-    title: "Textual Inversion"
-  - local: training/dreambooth
-    title: "Dreambooth"
+    title: "Text Inversion"
   - local: training/text2image
-    title: "Text-to-image fine-tuning"
+    title: "Text-to-image"
   title: "Training"
 - sections:
   - local: conceptual/stable_diffusion
@@ -94,7 +90,5 @@
       title: "Stable Diffusion"
     - local: api/pipelines/stochastic_karras_ve
       title: "Stochastic Karras VE"
-    - local: api/pipelines/dance_diffusion
-      title: "Dance Diffusion"
     title: "Pipelines"
   title: "API"
